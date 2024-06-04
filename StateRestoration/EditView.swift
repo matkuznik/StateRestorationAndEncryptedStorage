@@ -11,7 +11,7 @@ struct EditView: View {
     // The data model for storing all the products.
     @EnvironmentObject var productsViewModel: ProductsModel
     
-    @Environment(\.presentationMode) var presentationMode
+    @Environment(\.dismiss) var dismissView
     
     @ObservedObject var product: Product
 
@@ -19,9 +19,9 @@ struct EditView: View {
     @SceneStorage("EditView.useSavedValues") var useSavedValues = true
     
     // Restoration values for the edit fields.
-    @SceneStorage("EditView.editTitle") var editName: String = ""
-    @SceneStorage("EditView.editYear") var editYear: String = ""
-    @SceneStorage("EditView.editPrice") var editPrice: String = ""
+    @State var editName: String = ""
+    @State var editYear: String = ""
+    @State var editPrice: String = ""
     
     // Use different width and height for info view between compact and non-compact size classes.
     @Environment(\.horizontalSizeClass) var horizontalSizeClass
@@ -57,6 +57,16 @@ struct EditView: View {
                 Section(header: Text("PriceTitle")) {
                     TextField("AccessibilityPriceField", text: $editPrice)
                         .keyboardType(.decimalPad)
+                }
+                Section(header: Text("")) {
+                    Button("Save encrypted") {
+                        saveSecurely()
+                    }
+                }
+                Section(header: Text("")) {
+                    Button("Retrieve encrypted") {
+                        retrieveData()
+                    }
                 }
             }
 
@@ -95,15 +105,51 @@ struct EditView: View {
     
     func dismiss() {
         useSavedValues = true
-        self.presentationMode.wrappedValue.dismiss()
+        self.dismissView()
     }
 
     // User tapped the Done button to commit the product edit.
     func save() {
+        save(product)
+        productsViewModel.save()
+    }
+    
+    func save(_ product: Product) {
         product.name = editName
         product.year = Int(editYear)!
         product.price = Double(editPrice)!
         productsViewModel.save()
+    }
+    
+    func saveSecurely() {
+        do {
+            let product = Product(identifier: product.id, name: product.name, imageName: product.imageName, year: product.year, price: product.price)
+            save(product)
+            let data = try JSONEncoder().encode(product)
+            guard let dataJsonString = String(data: data, encoding: .utf8) else {
+                struct InvalidData: Error {}
+                throw InvalidData()
+            }
+            try Encryption(fileName: product.id.uuidString).save(dataJsonString)
+        } catch {
+            print("ERROR::", error)
+        }
+    }
+    
+    func retrieveData() {
+        do {
+            let stringData = try Encryption(fileName: product.id.uuidString).retrieve()
+            guard let jsonData = stringData?.data(using: .utf8) else {
+                struct InvalidData: Error {}
+                throw InvalidData()
+            }
+            let product = try JSONDecoder().decode(Product.self, from: jsonData)
+            editName = product.name
+            editYear = String(product.year)
+            editPrice = String(product.price)
+        } catch {
+            print("ERROR::", error)
+        }
     }
 }
 
