@@ -1,3 +1,8 @@
+# This projects merge 3 Apple's example projects:
+1. [Restoring Your App’s State with SwiftUI](https://developer.apple.com/documentation/swiftui/restoring_your_app_s_state_with_swiftui)
+2. [Storing CryptoKit Keys in the Keychain](https://developer.apple.com/documentation/cryptokit/storing_cryptokit_keys_in_the_keychain#3369556)
+3. [Encrypting and Decrypting a String](https://developer.apple.com/documentation/applearchive/encrypting_and_decrypting_a_string)
+
 # Restoring Your App's State with SwiftUI
 
 Provide app continuity for users by preserving their current activities.
